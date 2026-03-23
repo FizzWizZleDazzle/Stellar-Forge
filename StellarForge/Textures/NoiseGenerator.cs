@@ -30,7 +30,11 @@ public static class NoiseGenerator
         float lacunarity = 2.0f, float persistence = 0.5f, float scale = 3.0f, float yStretch = 1.0f)
     {
         var result = new float[width * height];
-        float seedOffset = seed * 100.0f;
+        // Keep offsets small to preserve float precision, use different axes for decorrelation
+        var seedRng = new Random(seed);
+        float offsetX = (float)(seedRng.NextDouble() * 256.0 - 128.0);
+        float offsetY = (float)(seedRng.NextDouble() * 256.0 - 128.0);
+        float offsetZ = (float)(seedRng.NextDouble() * 256.0 - 128.0);
 
         Parallel.For(0, height, y =>
         {
@@ -54,9 +58,9 @@ public static class NoiseGenerator
 
                 for (int o = 0; o < octaves; o++)
                 {
-                    float sx = nx * frequency + seedOffset;
-                    float sy = ny * frequency * yStretch + seedOffset;
-                    float sz = nz * frequency + seedOffset;
+                    float sx = nx * frequency + offsetX;
+                    float sy = ny * frequency * yStretch + offsetY;
+                    float sz = nz * frequency + offsetZ;
                     value += Noise3D(sx, sy, sz) * amplitude;
                     maxValue += amplitude;
                     amplitude *= persistence;
@@ -77,14 +81,18 @@ public static class NoiseGenerator
         var permBuffer = accelerator.Allocate1D<int>(Perm);
         var output = accelerator.Allocate2DDenseY<float>(new Index2D(width, height));
 
-        float seedOffset = seed * 100.0f;
+        // Derive small offsets from seed for float precision
+        var seedRng = new Random(seed);
+        float offsetX = (float)(seedRng.NextDouble() * 256.0 - 128.0);
+        float offsetY = (float)(seedRng.NextDouble() * 256.0 - 128.0);
+        float offsetZ = (float)(seedRng.NextDouble() * 256.0 - 128.0);
 
         var kernel = accelerator.LoadAutoGroupedStreamKernel<
             Index2D, ArrayView1D<int, Stride1D.Dense>, ArrayView2D<float, Stride2D.DenseY>,
-            int, int, int, float, float, float, float, float>(SphericalNoiseKernel);
+            int, int, int, float, float, float, float, float, float, float>(SphericalNoiseKernel);
 
         kernel(new Index2D(width, height), permBuffer.View, output.View,
-            width, height, octaves, lacunarity, persistence, scale, yStretch, seedOffset);
+            width, height, octaves, lacunarity, persistence, scale, yStretch, offsetX, offsetY, offsetZ);
 
         accelerator.Synchronize();
 
@@ -105,7 +113,8 @@ public static class NoiseGenerator
         ArrayView1D<int, Stride1D.Dense> perm,
         ArrayView2D<float, Stride2D.DenseY> output,
         int width, int height, int octaves,
-        float lacunarity, float persistence, float scale, float yStretch, float seedOffset)
+        float lacunarity, float persistence, float scale, float yStretch,
+        float offsetX, float offsetY, float offsetZ)
     {
         int x = index.X;
         int y = index.Y;
@@ -126,9 +135,9 @@ public static class NoiseGenerator
 
         for (int o = 0; o < octaves; o++)
         {
-            float sx = nx * frequency + seedOffset;
-            float sy = ny * frequency * yStretch + seedOffset;
-            float sz = nz * frequency + seedOffset;
+            float sx = nx * frequency + offsetX;
+            float sy = ny * frequency * yStretch + offsetY;
+            float sz = nz * frequency + offsetZ;
             value += GpuNoise3D(perm, sx, sy, sz) * amplitude;
             maxValue += amplitude;
             amplitude *= persistence;
