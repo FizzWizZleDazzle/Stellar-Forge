@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>StellarForge</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Define KSA_REAL when real game DLLs are present -->
+  <PropertyGroup Condition="Exists('Import/KSA.dll')">
+    <DefineConstants>$(DefineConstants);KSA_REAL</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ILGPU" Version="1.5.1" />
+    <PackageReference Include="ILGPU.Algorithms" Version="1.5.1" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+  </ItemGroup>
+
+  <!-- Copy mod.toml to output -->
+  <ItemGroup>
+    <None Include="mod.toml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Reference real game DLLs when available -->
+  <ItemGroup Condition="Exists('Import/KSA.dll')">
+    <Reference Include="KSA">
+      <HintPath>Import/KSA.dll</HintPath>
+    </Reference>
+    <Reference Include="Brutal.ImGuiAPI">
+      <HintPath>Import/Brutal.ImGuiAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="StarMap.API">
+      <HintPath>Import/StarMap.API.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

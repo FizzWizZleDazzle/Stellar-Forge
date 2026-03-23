@@ -1,0 +1,40 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+
+## NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*~
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Build output
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+## Generated content
+Content/Textures/*.png
+Content/Textures/*.dds
+
+## Game DLLs (not committed)
+StellarForge/Import/
+
+## Claude
+.claude/
